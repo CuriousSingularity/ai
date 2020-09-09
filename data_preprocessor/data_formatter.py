@@ -81,12 +81,37 @@ class CreateDatasetPackage():
             sub_g3.create_dataset("samples", data=self.valid["X"])
             sub_g3.create_dataset("labels", data=self.valid["Y"])
 
+    def get_class_probability(self, verbose=True):
+
+        def get_label_probability(labels):
+            each_class = np.sum(labels, axis=0)
+            total = np.sum(each_class)
+
+            class_probability = each_class / total
+            inverse_class_proability = class_probability ** -1
+
+            return class_probability, inverse_class_proability
+
+        class_probability = {}
+        inverse_class_proability = {}
+        class_probability["train"], inverse_class_proability["train"] = get_label_probability(self.train["Y"])
+        class_probability["valid"], inverse_class_proability["valid"] = get_label_probability(self.valid["Y"])
+        class_probability["test"], inverse_class_proability["test"] = get_label_probability(self.test["Y"])
+
+        return class_probability, inverse_class_proability
+
 
 if __name__ == "__main__":
     file = "example.h5"
 
     dp = CreateDatasetPackage(filename=file, dataset_name = "FullData", keys=["X_full", "y_full"])
 
-    dp.modify_shape([(64 , 64, 1)])
+    dp.modify_shape([(64, 64, 1)])
     dp.split()
     dp.save()
+
+    class_probability, inverse_class_proability = dp.get_class_probability()
+
+    for (key_cp, val_cp), (key_icp, val_icp) in zip(class_probability.items(), inverse_class_proability.items()):
+        print(f"Class Probability {key_cp} : {val_cp}")
+        print(f"Inverse Class Probability {key_icp} : {val_icp}")
